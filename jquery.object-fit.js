@@ -63,12 +63,15 @@
 		function findParentRatio(jqObject) {
 			var p = jqObject.parent(),
 				displayType = p.css('display');
-			
-			if (displayType == 'block' || displayType == '-webkit-box' && p.width() > 0) {
-				return { obj: p, width: p.width(), height: p.height(), ratio: (p.width() / p.height()) };
+			if (jqObject.parents('html').length > 0) { // To check if the object is in the DOM
+				if (displayType == 'block' || displayType == '-webkit-box' && p.width() > 0) {
+					return { obj: p, width: p.width(), height: p.height(), ratio: (p.width() / p.height()) };
+				} else {
+					return findParentRatio(p);
+				}
 			} else {
-				return findParentRatio(p);
-			}
+		        return null;
+		    }
 		}
 
 		var $this = $(elem),
@@ -87,27 +90,30 @@
 					ratio = pic_real_width / pic_real_height;
 					$this.data('ratio', ratio);
 				}
+				
+				if (parent) { // Don't resise if no parent
 
-				// Set the width/height
-				if (type === 'contain') {
-					if (parent.ratio > ratio) {
-						$this.width(parent.height * ratio);
-					} else {
-						$this.height(parent.width / ratio).width('100%');
-					}
-				}
-				else if (type === 'cover') {
-					// At least one dimension is smaller, so cover needs to size the image
-					if (parent.width > pic_real_width || parent.height > pic_real_height) {
+					// Set the width/height
+					if (type === 'contain') {
 						if (parent.ratio > ratio) {
-							$this.width(parent.width).height(parent.height * ratio);
+							$this.width(parent.height * ratio);
 						} else {
-							$this.height(parent.height).width(parent.width * ratio);
+							$this.height(parent.width / ratio).width('100%');
 						}
 					}
-					if (hideOverflow) {
-						// Apply overflow-hidden, or it looks ugly
-						parent.obj.css('overflow', 'hidden');
+					else if (type === 'cover') {
+						// At least one dimension is smaller, so cover needs to size the image
+						if (parent.width > pic_real_width || parent.height > pic_real_height) {
+							if (parent.ratio > ratio) {
+								$this.width(parent.width).height(parent.height * ratio);
+							} else {
+								$this.height(parent.height).width(parent.width * ratio);
+							}
+						}
+						if (hideOverflow) {
+							// Apply overflow-hidden, or it looks ugly
+							parent.obj.css('overflow', 'hidden');
+						}
 					}
 				}
 			});
